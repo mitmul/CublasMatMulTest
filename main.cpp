@@ -20,25 +20,25 @@ int main()
   cublasHandle_t handle;
   cublasCreate_v2(&handle);
 
-  ofstream ofs("time.csv");
-  int n = 1;
-  int m = 130;
-  int k = 7410;
+  ofstream ofs("time2.csv");
 
-  // Input Data Preparation
-  MatrixXd matA(n, m);
-  MatrixXd matB(m, k);
-  MatrixXd matC(n, k);
+  for(int i = 10; i < 3000; i = i + 10)
+  {
+    // Input Data Preparation
+    MatrixXd matA(i, i);
+    MatrixXd matB(i, i);
+    MatrixXd matC(i, i);
 
-  matA.setRandom();
-  matB.setRandom();
-  matC.setZero();
+    matA.setRandom();
+    matB.setRandom();
+    matC.setZero();
 
-  double eigen_time = multByEigen(matA, matB, matC);
-  double cublas_time = multByCublas(matA, matB, matC, handle);
+    double eigen_time = multByEigen(matA, matB, matC);
+    double cublas_time = multByCublas(matA, matB, matC, handle);
 
-  ofs << eigen_time << "," << cublas_time << endl;
-  cout << eigen_time << "\t" << cublas_time << endl;
+    ofs << i << "," << eigen_time << "," << cublas_time << endl;
+    cout << i << "\t: " << eigen_time << "\t" << cublas_time << endl;
+  }
 
   cublasDestroy_v2(handle);
 
@@ -49,11 +49,7 @@ double multByEigen(const MatrixXd &matA, const MatrixXd &matB, const MatrixXd &m
 {
   boost::timer time;
   MatrixXd retA = matA * matB + matC;
-  double elapsed_time = time.elapsed();
-
-  saveMatrix("eigen.csv", retA);
-
-  return elapsed_time;
+  return time.elapsed();
 }
 
 double multByCublas(const MatrixXd &matA, const MatrixXd &matB, const MatrixXd &matC, cublasHandle_t handle)
@@ -92,12 +88,10 @@ double multByCublas(const MatrixXd &matA, const MatrixXd &matB, const MatrixXd &
   cudaFree(d_matB);
   cudaFree(d_matC);
 
-  MatrixXd result(matC.rows(), matC.cols());
-  copyToMatrix(h_matC, result);
-
   double elapsed_time = time.elapsed();
 
-  saveMatrix("cublas.csv", result);
+  MatrixXd result(matC.rows(), matC.cols());
+  copyToMatrix(h_matC, result);
 
   free(h_matA);
   free(h_matB);
